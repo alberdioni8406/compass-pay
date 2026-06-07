@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="CashCompass Pay — Open-source Bitcoin Cash payment tools. No login. No custody. No fees. Just BCH."/>
+  <meta name="keywords" content="Bitcoin Cash, BCH, payments, invoice, QR code, crypto, peer to peer"/>
+  <meta property="og:title" content="CashCompass Pay | Bitcoin Cash Tools"/>
+  <meta property="og:description" content="Send BCH, generate invoices, and manage payments. 100% open source."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://compass-pay.vercel.app"/>
+  <meta property="og:image" content="https://compass-pay.vercel.app/preview.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="CashCompass Pay | Bitcoin Cash Tools"/>
+  <meta name="twitter:description" content="Send BCH, generate invoices, and manage payments. 100% open source. No login. No custody."/>
+  <meta name="twitter:image" content="https://compass-pay.vercel.app/preview.png"/>
+  <meta name="twitter:site" content="@alberdioni8406_"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>"/>
+  <title>CashCompass Pay | Bitcoin Cash Tools</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --bg:        #060a0f;
+      --surface:   #0d1520;
+      --surface2:  #111e2e;
+      --border:    #1a2d42;
+      --border2:   #243a52;
+      --green:     #00e676;
+      --green-dim: #00c854;
+      --blue:      #29b6f6;
+      --gold:      #ffd54f;
+      --red:       #ff5252;
+      --text:      #e2eaf4;
+      --muted:     #7a9ab8;
+      --mono:      'Space Mono', monospace;
+      --sans:      'Sora', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,230,118,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,230,118,.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* NAV */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 64px;
+      background: rgba(6,10,15,.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--green); letter-spacing: -.5px; }
+    .nav-brand .dot { color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .price-ticker {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px;
+      font-family: var(--mono); font-size: 11px;
+    }
+    .price-ticker .ticker-val { color: var(--green); font-weight: 700; }
+    .price-ticker .ticker-change { font-size: 10px; }
+    .ticker-up { color: #00e676; }
+    .ticker-down { color: var(--red); }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tabs button {
+      background: transparent; border: 1px solid transparent;
+      color: var(--muted); font-family: var(--mono); font-size: 11px;
+      letter-spacing: .5px; text-transform: uppercase;
+      padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: all .2s;
+      width: auto; margin: 0;
+    }
+    .nav-tabs button:hover, .nav-tabs button.active { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+    .nav-tabs button.active { color: var(--green); border-color: var(--green); }
+
+    /* LAYOUT */
+    .container { max-width: 1060px; margin: 0 auto; padding: 36px 24px 80px; position: relative; z-index: 1; }
+    .page { display: none; animation: fadeUp .3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* HERO */
+    .hero { text-align: center; padding: 64px 0 48px; }
+    .hero-badge { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); border: 1px solid var(--green); padding: 4px 12px; border-radius: 100px; margin-bottom: 24px; }
+    .hero h1 { font-size: clamp(36px, 6vw, 72px); font-weight: 700; line-height: 1.05; letter-spacing: -2px; color: var(--text); }
+    .hero h1 span { color: var(--green); }
+    .hero p { margin: 20px auto 36px; max-width: 520px; color: var(--muted); font-size: 16px; line-height: 1.6; }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* BTN */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 700;
+      letter-spacing: .5px; text-transform: uppercase;
+      border: none; cursor: pointer; transition: all .2s;
+      text-decoration: none; width: auto; margin: 0;
+    }
+    .btn-green { background: var(--green); color: #000; }
+    .btn-green:hover { background: var(--green-dim); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,230,118,.25); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+    .btn-blue { background: var(--blue); color: #000; }
+    .btn-blue:hover { background: #1aa0dc; }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-red:hover { background: #e04040; }
+    .btn-sm { padding: 8px 16px; font-size: 11px; }
+
+    /* FEATURES */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 48px 0; }
+    .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: border-color .2s; }
+    .feature-card:hover { border-color: var(--border2); }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* GRID */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* CARD */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+    .card-title { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--green); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+    /* FORM */
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    input, select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; transition: border-color .2s; outline: none; }
+    input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(0,230,118,.08); }
+    input::placeholder { color: var(--border2); }
+    select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a9ab8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    select option { background: #0d1520; }
+    .input-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* FIAT ROW */
+    .fiat-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: end; margin-bottom: 14px; }
+    .fiat-swap { display: flex; align-items: center; justify-content: center; padding-bottom: 10px; color: var(--muted); font-size: 14px; cursor: pointer; transition: color .2s; user-select: none; }
+    .fiat-swap:hover { color: var(--green); }
+    .fiat-eq { text-align: center; font-family: var(--mono); font-size: 10px; color: var(--muted); padding: 4px 0; }
+
+    /* AMOUNT WITH CURRENCY */
+    .amount-wrap { position: relative; }
+    .amount-wrap input { padding-right: 52px; }
+    .amount-suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--muted); pointer-events: none; }
+
+    button { width: 100%; margin: 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-row .btn { flex: 1; justify-content: center; }
+
+    /* QR OUTPUT */
+    .qr-container { display: flex; flex-direction: column; align-items: center; margin-top: 16px; padding: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; gap: 12px; }
+    .qr-container canvas, .qr-container img { border-radius: 8px; }
+    .uri-display { width: 100%; font-family: var(--mono); font-size: 10px; color: var(--muted); word-break: break-all; text-align: center; padding: 8px; background: var(--surface2); border-radius: 6px; cursor: pointer; border: 1px solid transparent; transition: border-color .2s; }
+    .uri-display:hover { border-color: var(--border2); color: var(--text); }
+    .qr-actions { display: flex; gap: 8px; width: 100%; }
+    .qr-actions .btn { flex: 1; justify-content: center; }
+
+    /* INVOICE PREVIEW */
+    .invoice-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; font-family: var(--mono); font-size: 12px; }
+    .inv-header { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+    .inv-merchant { font-size: 16px; font-weight: 700; color: var(--text); }
+    .inv-id { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .inv-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; color: var(--muted); }
+    .inv-row .val { color: var(--text); }
+    .inv-total { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 8px; }
+    .inv-total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .inv-total .amount-bch { font-size: 20px; color: var(--green); font-weight: 700; }
+    .inv-total .amount-fiat { font-size: 13px; color: var(--muted); }
+
+    /* HISTORY */
+    .history-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: border-color .2s; }
+    .history-item:hover { border-color: var(--border2); }
+    .history-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .history-amount { font-family: var(--mono); font-size: 14px; color: var(--green); font-weight: 700; }
+    .history-fiat { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* NOTICE */
+    .notice { background: rgba(0,230,118,.06); border: 1px solid rgba(0,230,118,.2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .notice strong { color: var(--green); }
+
+    /* STATS BAR */
+    .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0 36px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; text-align: center; }
+    .stat-val { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--green); }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* SECTION HEAD */
+    .section-head { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+
+    /* LIVE RATE BADGE */
+    .rate-badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .rate-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+    /* CURRENCY SELECTOR */
+    .currency-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+    .cur-btn { padding: 6px 8px; border-radius: 6px; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .5px; background: var(--bg); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .15s; width: 100%; margin: 0; text-align: center; }
+    .cur-btn:hover { border-color: var(--border2); color: var(--text); }
+    .cur-btn.active { background: rgba(0,230,118,.1); border-color: var(--green); color: var(--green); }
+
+    /* QUICK TIPS */
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--green); color: var(--green); font-family: var(--mono); font-size: 12px; padding: 10px 18px; border-radius: 8px; opacity: 0; transform: translateY(8px); transition: all .25s; z-index: 999; pointer-events: none; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 48px 24px; color: var(--muted); font-family: var(--mono); font-size: 13px; }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+    /* BCH BADGE */
+    .bch-tag { display: inline-block; background: rgba(0,230,118,.1); border: 1px solid rgba(0,230,118,.25); color: var(--green); font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+
+    /* SPINNER */
+    .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid rgba(0,230,118,.3); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FOOTER */
+    footer { position: relative; z-index: 1; text-align: center; padding: 24px; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 11px; }
+    footer a { color: var(--green); text-decoration: none; }
+
+    /* RESPONSIVE */
+    @media (max-width: 720px) {
+      .grid-2, .features, .stats-bar, .currency-grid { grid-template-columns: 1fr; }
+      .currency-grid { grid-template-columns: repeat(4, 1fr); }
+      .nav-tabs button { padding: 6px 9px; font-size: 10px; }
+      .nav { padding: 0 14px; }
+      .container { padding: 24px 16px 60px; }
+      .price-ticker { display: none; }
+      .fiat-row { grid-template-columns: 1fr auto 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">🧭 CashCompass<span class="dot">.</span>Pay</div>
+  <div class="nav-right">
+    <div class="price-ticker" id="price-ticker">
+      <span style="color:var(--muted)">BCH</span>
+      <span class="ticker-val" id="ticker-price">—</span>
+      <span class="ticker-change" id="ticker-change">—</span>
+    </div>
+    <div class="nav-tabs">
+      <button onclick="showPage('home')" class="active" id="tab-home">Home</button>
+      <button onclick="showPage('pay')" id="tab-pay">Pay</button>
+      <button onclick="showPage('invoice')" id="tab-invoice">Invoice</button>
+      <button onclick="showPage('history')" id="tab-history">History</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- HOME -->
+  <div class="page active" id="home">
+    <div class="hero">
+      <div class="hero-badge">Open Source · Non-Custodial · Free</div>
+      <h1>Bitcoin Cash<br/><span>Payment Tools</span></h1>
+      <p>Send BCH, generate merchant invoices, and manage payment history.
+         No login. No custody. No servers storing your data.</p>
+      <div class="hero-cta">
+        <button class="btn btn-green" onclick="showPage('pay')">⚡ Send Payment</button>
+        <button class="btn btn-outline" onclick="showPage('invoice')">🧾 Create Invoice</button>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-val" id="stat-invoices">0</div>
+        <div class="stat-label">Invoices Created</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="stat-bch">0.000</div>
+        <div class="stat-label">BCH Invoiced</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">0%</div>
+        <div class="stat-label">Platform Fee</div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">💸</div>
+        <h3>BIP21 Payment Links</h3>
+        <p>Generate standard <code>bitcoincash:</code> URIs and QR codes accepted by any BCH wallet worldwide.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💱</div>
+        <h3>Live Fiat Conversion</h3>
+        <p>Enter amounts in USD, EUR, GBP, MZN, ZAR, NGN, BRL and more — converts to BCH in real time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>100% Client-Side</h3>
+        <p>No server. No API keys. No tracking. All data stays in your browser. QR codes work offline.</p>
+      </div>
+    </div>
+
+    <div class="notice">
+      <strong>Non-custodial:</strong> CashCompass Pay never holds your funds or stores your addresses on any server.
+      All operations happen entirely in your browser. Live rates from CoinGecko.
+    </div>
+  </div>
+
+  <!-- PAY -->
+  <div class="page" id="pay">
+    <div class="section-head">
+      <span>// Payment Generator</span>
+      <div class="rate-badge"><div class="rate-dot"></div> BCH = <span id="pay-rate-display">loading…</span></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Form -->
+      <div class="card">
+        <div class="card-title">💸 Send BCH</div>
+
+        <div class="form-group">
+          <label>Recipient Address</label>
+          <input id="p_address" placeholder="bitcoincash:q…" autocomplete="off" spellcheck="false"/>
+          <div class="input-hint">Supports CashAddr and legacy format</div>
+        </div>
+
+        <!-- Currency selector -->
+        <div class="form-group">
+          <label>Enter Amount In</label>
+          <div class="currency-grid" id="pay-cur-grid">
+            <button class="cur-btn active" onclick="setPayCurrency('BCH')">BCH</button>
+            <button class="cur-btn" onclick="setPayCurrency('USD')">USD</button>
+            <button class="cur-btn" onclick="setPayCurrency('EUR')">EUR</button>
+            <button class="cur-btn" onclick="setPayCurrency('GBP')">GBP</button>
+            <button class="cur-btn" onclick="setPayCurrency('MZN')">MZN</button>
+            <button class="cur-btn" onclick="setPayCurrency('ZAR')">ZAR</button>
+            <button class="cur-btn" onclick="setPayCurrency('NGN')">NGN</button>
+            <button class="cur-btn" onclick="setPayCurrency('BRL')">BRL</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="p_amount_label">Amount (BCH)</label>
+          <div class="amount-wrap">
+            <input id="p_amount" type="number" min="0" step="any" placeholder="0.00" oninput="onPayAmountInput()"/>
+            <span class="amount-suffix" id="p_amount_suffix">BCH</span>
+          </div>
+          <div class="input-hint" id="p_amount_hint" style="color:var(--green); min-height:16px;"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Memo (optional)</label>
+          <input id="p_memo" placeholder="Coffee, rent, invoice #001…"/>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="generatePay()">Generate QR</button>
+          <button class="btn btn-outline" onclick="copyPay()">Copy URI</button>
+        </div>
+
+        <!-- Quick tips -->
+        <div style="margin-top:20px;">
+          <label>Quick Tip (BCH)</label>
+          <div class="quick-grid">
+            <button class="btn btn-outline btn-sm" onclick="quickTip(0.001)">0.001</button>
+            <button class="btn btn-outline btn-sm" onclick="quickTip(0.005)">0.005</button>
+            <button class="btn btn-outline btn-sm" onclick="quickTip(0.01)">0.010</button>
+            <button class="btn btn-outline btn-sm" onclick="quickTip(0.05)">0.050</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Output -->
+      <div class="card">
+        <div class="card-title">📡 Payment QR</div>
+        <div id="pay-qr-wrap">
+          <div class="empty">
+            <div class="empty-icon">📲</div>
+            Enter address + amount<br/>to generate payment QR
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVOICE -->
+  <div class="page" id="invoice">
+    <div class="section-head">
+      <span>// Invoice Generator</span>
+      <div class="rate-badge"><div class="rate-dot"></div> BCH = <span id="inv-rate-display">loading…</span></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Form -->
+      <div class="card">
+        <div class="card-title">🧾 Create Invoice</div>
+
+        <div class="form-group">
+          <label>Merchant / Your Name</label>
+          <input id="m_name" placeholder="My BCH Shop"/>
+        </div>
+
+        <div class="form-group">
+          <label>Item / Service</label>
+          <input id="m_item" placeholder="Web design, rent, product…"/>
+        </div>
+
+        <!-- Currency selector -->
+        <div class="form-group">
+          <label>Invoice Currency</label>
+          <div class="currency-grid" id="inv-cur-grid">
+            <button class="cur-btn active" onclick="setInvCurrency('BCH')">BCH</button>
+            <button class="cur-btn" onclick="setInvCurrency('USD')">USD</button>
+            <button class="cur-btn" onclick="setInvCurrency('EUR')">EUR</button>
+            <button class="cur-btn" onclick="setInvCurrency('GBP')">GBP</button>
+            <button class="cur-btn" onclick="setInvCurrency('MZN')">MZN</button>
+            <button class="cur-btn" onclick="setInvCurrency('ZAR')">ZAR</button>
+            <button class="cur-btn" onclick="setInvCurrency('NGN')">NGN</button>
+            <button class="cur-btn" onclick="setInvCurrency('BRL')">BRL</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="m_amount_label">Amount (BCH)</label>
+          <div class="amount-wrap">
+            <input id="m_amount" type="number" min="0" step="any" placeholder="0.00" oninput="onInvAmountInput()"/>
+            <span class="amount-suffix" id="m_amount_suffix">BCH</span>
+          </div>
+          <div class="input-hint" id="m_amount_hint" style="color:var(--green); min-height:16px;"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Your BCH Address</label>
+          <input id="m_address" placeholder="bitcoincash:q…" spellcheck="false"/>
+        </div>
+
+        <div class="form-group">
+          <label>Reference / Order #</label>
+          <input id="m_ref" placeholder="ORD-001"/>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="createInvoice()">Generate</button>
+          <button class="btn btn-blue" onclick="saveInvoice()">Save</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title">📄 Invoice Preview</div>
+          <div id="invoice_preview">
+            <div class="empty">
+              <div class="empty-icon">🧾</div>
+              Fill the form to preview
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📡 Payment QR</div>
+          <div id="inv-qr-wrap">
+            <div class="empty" style="padding:24px;">
+              <div class="empty-icon">📲</div>
+              QR appears here
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="page" id="history">
+    <div class="section-head">
+      <span>// Invoice History</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="exportHistory()">Export JSON</button>
+        <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear All</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="history_list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- FOOTER -->
+<footer>
+  <span>⚡ CashCompass Pay</span> —
+  Open source Bitcoin Cash tools.
+  <a href="https://github.com/alberdioni8406/compass-pay" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://Cashcompass-bch.vercel.app" target="_blank" rel="noopener">cashcompass.space</a>
+  <br/><br/>
+  <span style="font-size:10px;">Non-custodial. All data stored locally. No tracking. No ads.</span>
+  <br/><br/>
+  <div style="display:inline-block; background:#0d1520; border:1px solid #1a2d42; border-radius:12px; padding:16px 24px; max-width:480px;">
+    <div style="font-size:13px; color:#e2eaf4; margin-bottom:8px;">☕ If CashCompass Pay saved you time or helped your business accept BCH, consider sending a small tip to support continued development.</div>
+    <a href="bitcoincash:qrtv37u522gz8a5lezfqk5vukly93cu7gc8tn09040" style="display:inline-flex; align-items:center; gap:8px; background:#00e676; color:#000; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:9px 18px; border-radius:7px; text-decoration:none; margin-top:4px;">⚡ Donate BCH</a>
+    <div style="font-size:10px; color:#7a9ab8; margin-top:8px; word-break:break-all;">bitcoincash:qrtv37u522gz8a5lezfqk5vukly93cu7gc8tn09040</div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+/* ─── STATE ─── */
+const DB_KEY = 'cc_invoices_v2';
+let invoices = [];
+let currentPayURI = '';
+let currentInvoice = null;
+let bchPrice = {}; // { USD, EUR, GBP, MZN, ZAR, NGN, BRL }
+let payCurrency = 'BCH';
+let invCurrency = 'BCH';
+
+const CURRENCIES = ['USD','EUR','GBP','MZN','ZAR','NGN','BRL'];
+const CUR_SYMBOL = { BCH:'BCH', USD:'$', EUR:'€', GBP:'£', MZN:'MT', ZAR:'R', NGN:'₦', BRL:'R$' };
+
+/* ─── INIT ─── */
+function load() {
+  try { invoices = JSON.parse(localStorage.getItem(DB_KEY) || '[]'); } catch { invoices = []; }
+  updateStats();
+  fetchPrice();
+  setInterval(fetchPrice, 60000);
+}
+
+/* ─── LIVE PRICE ─── */
+async function fetchPrice() {
+  try {
+    // vs_currencies includes all we need + mzn approximated via usd*65 (no direct feed for MZN on coingecko free)
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin-cash&vs_currencies=usd,eur,gbp,zar,ngn,brl&include_24hr_change=true');
+    if (!res.ok) throw new Error('rate fetch failed');
+    const data = await res.json();
+    const d = data['bitcoin-cash'];
+    bchPrice = {
+      USD: d.usd,
+      EUR: d.eur,
+      GBP: d.gbp,
+      ZAR: d.zar,
+      NGN: d.ngn,
+      BRL: d.brl,
+      MZN: +(d.usd * 63.5).toFixed(2), // MZN approximation via USD
+    };
+    const change = d.usd_24h_change;
+    const changeStr = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+    const changeClass = change >= 0 ? 'ticker-up' : 'ticker-down';
+    document.getElementById('ticker-price').textContent = '$' + d.usd.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    document.getElementById('ticker-change').className = 'ticker-change ' + changeClass;
+    document.getElementById('ticker-change').textContent = changeStr;
+
+    const rateText = '$' + d.usd.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' USD';
+    document.getElementById('pay-rate-display').textContent = rateText;
+    document.getElementById('inv-rate-display').textContent = rateText;
+
+    // Refresh hints if amounts already entered
+    onPayAmountInput();
+    onInvAmountInput();
+  } catch(e) {
+    document.getElementById('pay-rate-display').textContent = 'unavailable';
+    document.getElementById('inv-rate-display').textContent = 'unavailable';
+  }
+}
+
+function fiatToBCH(amount, currency) {
+  if (currency === 'BCH') return amount;
+  const rate = bchPrice[currency];
+  if (!rate) return null;
+  return amount / rate;
+}
+
+function bchToFiat(bch, currency) {
+  if (currency === 'BCH') return bch;
+  const rate = bchPrice[currency];
+  if (!rate) return null;
+  return bch * rate;
+}
+
+function formatFiat(val, currency) {
+  if (val == null) return '—';
+  const sym = CUR_SYMBOL[currency] || currency;
+  return sym + val.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+/* ─── PAY CURRENCY ─── */
+function setPayCurrency(cur) {
+  payCurrency = cur;
+  document.querySelectorAll('#pay-cur-grid .cur-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === cur);
+  });
+  document.getElementById('p_amount_label').textContent = `Amount (${cur})`;
+  document.getElementById('p_amount_suffix').textContent = cur;
+  document.getElementById('p_amount').value = '';
+  document.getElementById('p_amount_hint').textContent = '';
+}
+
+function onPayAmountInput() {
+  const raw = parseFloat(document.getElementById('p_amount').value);
+  const hint = document.getElementById('p_amount_hint');
+  if (!raw || isNaN(raw)) { hint.textContent = ''; return; }
+  if (payCurrency === 'BCH') {
+    const fiatVals = CURRENCIES.map(c => {
+      const f = bchToFiat(raw, c);
+      return f ? formatFiat(f, c) : null;
+    }).filter(Boolean);
+    hint.textContent = fiatVals.slice(0,3).join(' · ');
+  } else {
+    const bch = fiatToBCH(raw, payCurrency);
+    hint.textContent = bch ? '≈ ' + bch.toFixed(8) + ' BCH' : 'Rate unavailable';
+  }
+}
+
+/* ─── INV CURRENCY ─── */
+function setInvCurrency(cur) {
+  invCurrency = cur;
+  document.querySelectorAll('#inv-cur-grid .cur-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === cur);
+  });
+  document.getElementById('m_amount_label').textContent = `Amount (${cur})`;
+  document.getElementById('m_amount_suffix').textContent = cur;
+  document.getElementById('m_amount').value = '';
+  document.getElementById('m_amount_hint').textContent = '';
+}
+
+function onInvAmountInput() {
+  const raw = parseFloat(document.getElementById('m_amount').value);
+  const hint = document.getElementById('m_amount_hint');
+  if (!raw || isNaN(raw)) { hint.textContent = ''; return; }
+  if (invCurrency === 'BCH') {
+    const fiatVals = CURRENCIES.map(c => {
+      const f = bchToFiat(raw, c);
+      return f ? formatFiat(f, c) : null;
+    }).filter(Boolean);
+    hint.textContent = fiatVals.slice(0,3).join(' · ');
+  } else {
+    const bch = fiatToBCH(raw, invCurrency);
+    hint.textContent = bch ? '≈ ' + bch.toFixed(8) + ' BCH' : 'Rate unavailable';
+  }
+}
+
+/* ─── STATS ─── */
+function updateStats() {
+  document.getElementById('stat-invoices').textContent = invoices.length;
+  const total = invoices.reduce((s, i) => s + parseFloat(i.bchAmt || i.amt || 0), 0);
+  document.getElementById('stat-bch').textContent = total.toFixed(4);
+}
+
+function save() { localStorage.setItem(DB_KEY, JSON.stringify(invoices)); updateStats(); }
+
+/* ─── TABS ─── */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'history') renderHistory();
+}
+
+/* ─── TOAST ─── */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ─── COPY ─── */
+function copyText(text) {
+  if (!text) return;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast('✓ Copied to clipboard')).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); toast('✓ Copied to clipboard'); } catch { toast('⚠ Copy failed — select manually'); }
+  document.body.removeChild(ta);
+}
+
+/* ─── VALIDATION ─── */
+function isValidBCH(addr) {
+  return addr.startsWith('bitcoincash:') || addr.startsWith('q') || addr.startsWith('p') || /^[13][a-zA-Z0-9]{25,34}$/.test(addr) || addr.length >= 34;
+}
+
+/* ─── BUILD URI ─── */
+function buildPayURI(addr, bchAmt, memo) {
+  let uri = 'bitcoincash:' + addr.replace('bitcoincash:', '');
+  const params = [];
+  if (bchAmt) params.push('amount=' + parseFloat(bchAmt).toFixed(8));
+  if (memo) params.push('message=' + encodeURIComponent(memo));
+  if (params.length) uri += '?' + params.join('&');
+  return uri;
+}
+
+/* ─── QR HELPER ─── */
+function renderQR(containerId, text, extraActions) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'qr-container';
+
+  const qrEl = document.createElement('div');
+  new QRCode(qrEl, { text, width: 200, height: 200, colorDark: '#00e676', colorLight: '#0d1520', correctLevel: QRCode.CorrectLevel.M });
+  wrap.appendChild(qrEl);
+
+  // Clickable URI — copies on click
+  const uriEl = document.createElement('div');
+  uriEl.className = 'uri-display';
+  uriEl.textContent = text;
+  uriEl.title = 'Click to copy';
+  uriEl.onclick = () => copyText(text);
+  wrap.appendChild(uriEl);
+
+  // Action buttons
+  const actEl = document.createElement('div');
+  actEl.className = 'qr-actions';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn btn-green btn-sm';
+  copyBtn.textContent = '📋 Copy URI';
+  copyBtn.onclick = () => copyText(text);
+  actEl.appendChild(copyBtn);
+
+  const openBtn = document.createElement('button');
+  openBtn.className = 'btn btn-outline btn-sm';
+  openBtn.textContent = '⚡ Open Wallet';
+  openBtn.onclick = () => { window.location.href = text; };
+  actEl.appendChild(openBtn);
+
+  if (extraActions) {
+    extraActions.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'btn btn-outline btn-sm';
+      b.textContent = a.label;
+      b.onclick = a.fn;
+      actEl.appendChild(b);
+    });
+  }
+
+  wrap.appendChild(actEl);
+  el.appendChild(wrap);
+}
+
+/* ─── PAY ─── */
+function getPayBCH() {
+  const raw = parseFloat(document.getElementById('p_amount').value);
+  if (!raw || isNaN(raw)) return null;
+  if (payCurrency === 'BCH') return raw;
+  return fiatToBCH(raw, payCurrency);
+}
+
+function generatePay() {
+  const addr = document.getElementById('p_address').value.trim();
+  const memo = document.getElementById('p_memo').value.trim();
+  if (!addr) { toast('⚠ Enter a BCH address'); return; }
+  if (!isValidBCH(addr)) { toast('⚠ Address looks invalid'); return; }
+  const bchAmt = getPayBCH();
+  if (!bchAmt || bchAmt <= 0) { toast('⚠ Enter a valid amount'); return; }
+  if (payCurrency !== 'BCH' && !bchPrice[payCurrency]) { toast('⚠ Rate not loaded yet — try again'); return; }
+  currentPayURI = buildPayURI(addr, bchAmt, memo);
+  renderQR('pay-qr-wrap', currentPayURI);
+}
+
+function copyPay() {
+  if (!currentPayURI) { toast('⚠ Generate a payment first'); return; }
+  copyText(currentPayURI);
+}
+
+function quickTip(amount) {
+  const addr = document.getElementById('p_address').value.trim();
+  if (!addr) { toast('⚠ Enter an address first'); return; }
+  setPayCurrency('BCH');
+  document.getElementById('p_amount').value = amount;
+  onPayAmountInput();
+  currentPayURI = buildPayURI(addr, amount, 'Tip via CashCompass Pay');
+  renderQR('pay-qr-wrap', currentPayURI);
+}
+
+/* ─── INVOICE ─── */
+function getInvBCH() {
+  const raw = parseFloat(document.getElementById('m_amount').value);
+  if (!raw || isNaN(raw)) return null;
+  if (invCurrency === 'BCH') return raw;
+  return fiatToBCH(raw, invCurrency);
+}
+
+function createInvoice() {
+  const name = document.getElementById('m_name').value.trim();
+  const item = document.getElementById('m_item').value.trim();
+  const addr = document.getElementById('m_address').value.trim();
+  const ref  = document.getElementById('m_ref').value.trim();
+  if (!name || !item || !addr) { toast('⚠ Fill all required fields'); return; }
+  if (!isValidBCH(addr)) { toast('⚠ Invalid BCH address'); return; }
+
+  const bchAmt = getInvBCH();
+  if (!bchAmt || bchAmt <= 0) { toast('⚠ Enter a valid amount'); return; }
+  if (invCurrency !== 'BCH' && !bchPrice[invCurrency]) { toast('⚠ Rate not loaded — try again'); return; }
+
+  const rawInput = parseFloat(document.getElementById('m_amount').value);
+  const id  = 'INV-' + Date.now();
+  const ts  = new Date().toISOString();
+  const fiatDisplay = invCurrency !== 'BCH' ? formatFiat(rawInput, invCurrency) : null;
+  const fiatUSD = bchToFiat(bchAmt, 'USD');
+
+  const msg = encodeURIComponent([name, item, ref, id].filter(Boolean).join(' | '));
+  const uri = 'bitcoincash:' + addr.replace('bitcoincash:', '') + '?amount=' + bchAmt.toFixed(8) + '&message=' + msg;
+
+  currentInvoice = { id, name, item, bchAmt, amt: bchAmt, addr, ref, uri, ts, invCurrency, rawInput, fiatDisplay, fiatUSD };
+
+  // Preview
+  document.getElementById('invoice_preview').innerHTML = `
+    <div class="invoice-preview">
+      <div class="inv-header">
+        <div class="inv-merchant">${sanitize(name)}</div>
+        <div class="inv-id">${id}</div>
+        <div class="inv-id">${new Date(ts).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <div class="inv-row"><span>Item</span><span class="val">${sanitize(item)}</span></div>
+      ${ref ? `<div class="inv-row"><span>Reference</span><span class="val">${sanitize(ref)}</span></div>` : ''}
+      <div class="inv-row"><span>Address</span><span class="val" style="font-size:10px;">${addr.substring(0,22)}…</span></div>
+      <div class="inv-total">
+        <div class="inv-total-row"><span>Total Due</span><span class="amount-bch">${bchAmt.toFixed(8)} BCH</span></div>
+        ${fiatDisplay ? `<div class="inv-total-row"><span style="font-size:10px;"></span><span class="amount-fiat">${sanitize(fiatDisplay)} ${invCurrency}</span></div>` : ''}
+        ${fiatUSD && invCurrency !== 'USD' ? `<div class="inv-total-row"><span style="font-size:10px;"></span><span class="amount-fiat">${formatFiat(fiatUSD,'USD')} USD</span></div>` : ''}
+      </div>
+    </div>
+  `;
+
+  renderQR('inv-qr-wrap', uri, [
+    { label: '📋 Copy URI', fn: () => copyText(uri) }
+  ]);
+}
+
+function saveInvoice() {
+  if (!currentInvoice) { toast('⚠ Generate an invoice first'); return; }
+  if (invoices.find(i => i.id === currentInvoice.id)) { toast('Already saved'); return; }
+  invoices.push(currentInvoice);
+  save();
+  toast('✓ Invoice saved to history');
+}
+
+/* ─── HISTORY ─── */
+function renderHistory() {
+  const el = document.getElementById('history_list');
+  if (!invoices.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No invoices saved yet</div>';
+    return;
+  }
+  el.innerHTML = [...invoices].reverse().map((inv, ri) => {
+    const realIdx = invoices.length - 1 - ri;
+    const bchAmt = parseFloat(inv.bchAmt || inv.amt || 0);
+    const fiatUSD = bchToFiat(bchAmt, 'USD');
+    return `
+      <div class="history-item">
+        <div>
+          <div style="font-weight:600; font-size:14px;">${sanitize(inv.name)} <span class="bch-tag">BCH</span></div>
+          <div class="history-meta">${sanitize(inv.item)}${inv.ref ? ' · ' + sanitize(inv.ref) : ''}</div>
+          <div class="history-meta">${inv.id} · ${new Date(inv.ts).toLocaleDateString()}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="history-amount">${bchAmt.toFixed(5)} BCH</div>
+          <div class="history-fiat">${fiatUSD ? '≈ ' + formatFiat(fiatUSD,'USD') : ''}</div>
+          <div style="display:flex; gap:6px; margin-top:8px; justify-content:flex-end;">
+            <button class="btn btn-outline btn-sm" style="width:auto;" onclick="copyText('${inv.uri.replace(/'/g,"\\'")}')">Copy</button>
+            <button class="btn btn-outline btn-sm" style="width:auto;" onclick="popQR(${realIdx})">QR</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function popQR(idx) {
+  const inv = invoices[idx];
+  if (!inv) return;
+  const uri = inv.uri || buildPayURI(inv.addr, inv.bchAmt || inv.amt, [inv.name, inv.item, inv.ref, inv.id].filter(Boolean).join(' | '));
+  const win = window.open('', '_blank', 'width=380,height=520,menubar=no,toolbar=no');
+  if (!win) { toast('⚠ Pop-up blocked — allow pop-ups for this site'); return; }
+  win.document.write(`<!DOCTYPE html><html><head><title>${inv.id}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060a0f;color:#e2eaf4;font-family:monospace;text-align:center;padding:28px}
+    h3{color:#00e676;margin-bottom:4px;font-size:14px}p.sub{font-size:11px;color:#7a9ab8;margin-bottom:16px}
+    #qr{display:flex;justify-content:center;margin-bottom:14px}
+    .uri{font-size:10px;color:#7a9ab8;word-break:break-all;padding:8px;background:#111e2e;border-radius:6px;cursor:pointer;border:1px solid #1a2d42}
+    .uri:hover{border-color:#00e676;color:#e2eaf4}
+    button{margin-top:12px;width:100%;padding:10px;background:#00e676;color:#000;border:none;border-radius:7px;font-family:monospace;font-size:12px;font-weight:700;cursor:pointer}
+    </style></head><body>
+    <h3>${inv.id}</h3>
+    <p class="sub">${sanitize(inv.name)} · ${parseFloat(inv.bchAmt||inv.amt).toFixed(8)} BCH</p>
+    <div id="qr"></div>
+    <div class="uri" onclick="navigator.clipboard&&navigator.clipboard.writeText('${uri.replace(/'/g,"\\'")}');this.textContent='✓ Copied!'">${uri}</div>
+    <button onclick="window.location.href='${uri.replace(/'/g,"\\'")}'"'>⚡ Open in Wallet</button>
+    <script>new QRCode(document.getElementById('qr'),{text:'${uri.replace(/'/g,"\\'")}',width:220,height:220,colorDark:'#00e676',colorLight:'#0d1520',correctLevel:QRCode.CorrectLevel.M});<\/script>
+    </body></html>`);
+  win.document.close();
+}
+
+function clearHistory() {
+  if (!invoices.length) { toast('Nothing to clear'); return; }
+  if (!confirm('Delete all ' + invoices.length + ' saved invoices?')) return;
+  localStorage.removeItem(DB_KEY);
+  invoices = [];
+  updateStats();
+  renderHistory();
+  toast('✓ History cleared');
+}
+
+function exportHistory() {
+  if (!invoices.length) { toast('No invoices to export'); return; }
+  const blob = new Blob([JSON.stringify(invoices, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'cashcompass-invoices.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('✓ Exported');
+}
+
+/* ─── SECURITY ─── */
+function sanitize(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str || '');
+  return d.innerHTML;
+}
+
+/* ─── BOOT ─── */
+load();
+</script>
+</body>
+</html>
