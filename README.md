@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![BCH](https://img.shields.io/badge/Powered%20by-Bitcoin%20Cash-brightgreen)](https://bitcoincash.org)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cashcompass/cashcompass-pay)
-[![Vercel](https://img.shields.io/badge/Hosted%20on-Vercel-black)](https://cashcompass.space)
+[![Vercel](https://img.shields.io/badge/Hosted%20on-Vercel-black)](https://cashcompass-bch.vercel.app)
 
 ---
 
