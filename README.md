@@ -268,7 +268,7 @@ If CashCompass Pay is useful to you, consider sending a small BCH donation:
 
 **`bitcoincash:qrtv37u522gz8a5lezfqk5vukly93cu7gc8tn09040`**
 
-Or visit [cashcompass.space](https://cashcompass.space) to explore the full BCH ecosystem resource hub.
+Or visit [cashcompass.space](https://cashcompass-bch.vercel.app) to explore the full BCH ecosystem resource hub.
 
 ---
 
@@ -280,12 +280,12 @@ MIT License — free to use, fork, and modify. See [LICENSE](LICENSE) for full t
 
 ## 🔗 Part of the CashCompass Ecosystem
 
-CashCompass Pay is one tool in the broader [CashCompass](https://cashcompass.space) project — a community-maintained Bitcoin Cash resource hub covering wallets, explorers, developer tools, CashTokens, DeFi, and onboarding resources.
+CashCompass Pay is one tool in the broader [CashCompass](https://cashcompass-bch.vercel.app) project — a community-maintained Bitcoin Cash resource hub covering wallets, explorers, developer tools, CashTokens, DeFi, and onboarding resources.
 
 | Resource | Description |
 |---|---|
-| [cashcompass.space](https://cashcompass.space) | Main ecosystem hub |
-| [CashCompass Pay](https://cashcompass.space/pay) | This project |
+| [cashcompass.space](https://cashcompass-bch.vercel.app) | Main ecosystem hub |
+| [CashCompass Pay](https://compass-pay.vercel.app) | This project |
 | [@alberdioni8406_](https://twitter.com/alberdioni8406_) | Project updates on X |
 
 ---
