@@ -17,7 +17,7 @@
   <meta name="twitter:image" content="https://compass-pay.vercel.app/preview.png"/>
   <meta name="twitter:site" content="@alberdioni8406_"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>"/>
-  <title>CashCompass Pay | Bitcoin Cash Payment Tools</title>
+  <title>CashCompass Pay | Bitcoin Cash Payment Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -588,7 +588,16 @@ function fbCopy(txt){
   try{document.execCommand('copy');toast('✓ Copied!');}catch{toast('⚠ Select & copy manually');}
   document.body.removeChild(ta);
 }
-function validAddr(a){ return a&&(a.startsWith('bitcoincash:')||a.startsWith('q')||a.startsWith('p')||/^[13][a-zA-Z0-9]{25,34}$/.test(a)||a.length>=34); }
+function validAddr(a){
+  if(!a) return false;
+  // Strip prefix if present
+  const s = a.startsWith('bitcoincash:') ? a.slice(12) : a;
+  // CashAddr: q/p + 41 base32 chars (total payload = 42 chars without prefix)
+  if(/^[qp][ac-hj-np-z02-9]{41}$/.test(s)) return true;
+  // Legacy P2PKH (1...) or P2SH (3...) — 25-34 Base58 chars
+  if(/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(s)) return true;
+  return false;
+}
 function sanitize(s){ const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML; }
 function buildURI(addr,bch,memo){
   let u='bitcoincash:'+addr.replace('bitcoincash:','');
